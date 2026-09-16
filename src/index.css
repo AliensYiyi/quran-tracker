@@ -1,0 +1,24 @@
+@import "tailwindcss";
+
+/* Hide arrows from number inputs only with .no-spin */
+input[type="number"].no-spin::-webkit-inner-spin-button,
+input[type="number"].no-spin::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type="number"].no-spin {
+  -moz-appearance: textfield;
+}
+
+html.dark {
+  filter: invert(1) hue-rotate(180deg);
+  background: #000;
+}
+
+/* Re-invert emojis so they don't look weird */
+html.dark .text-4xl,
+html.dark .text-5xl,
+html.dark button,
+html.dark .emoji {
+  /* filter: invert(1) hue-rotate(180deg); */
+}
