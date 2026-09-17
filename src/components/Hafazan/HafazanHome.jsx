@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { surahs } from "../../data/surahs";
 import { getSurahText } from "../../utils/arabicText";
+import TasmikScreen from "./TasmikScreen";
 
 function AyahCard({ ayah, lang, globalRevealState }) {
   const [isRevealed, setIsRevealed] = useState(true);
@@ -48,6 +49,7 @@ export default function HafazanHome({ session, lang }) {
   const [surahText, setSurahText] = useState([]);
   const [loading, setLoading] = useState(false);
   const [globalRevealState, setGlobalRevealState] = useState(true);
+  const [isTasmikMode, setIsTasmikMode] = useState(false);
 
   const openSurah = async (surah) => {
     setSelectedSurah(surah);
@@ -59,6 +61,10 @@ export default function HafazanHome({ session, lang }) {
   };
 
   if (selectedSurah) {
+    if (isTasmikMode) {
+      return <TasmikScreen surah={selectedSurah} surahText={surahText} lang={lang} onBack={() => setIsTasmikMode(false)} />;
+    }
+
     return (
       <div className="space-y-6">
         <div className="flex justify-between items-center">
@@ -70,14 +76,22 @@ export default function HafazanHome({ session, lang }) {
           </button>
           
           {!loading && surahText.length > 0 && (
-            <button 
-              onClick={() => setGlobalRevealState(!globalRevealState)}
-              className="text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-700 px-4 py-2 rounded-full shadow-sm"
-            >
-              {globalRevealState 
-                ? (lang === "en" ? "🙈 Hide All" : "🙈 Sembunyi Semua") 
-                : (lang === "en" ? "👀 Show All" : "👀 Papar Semua")}
-            </button>
+            <div className="flex gap-2">
+              <button 
+                onClick={() => setIsTasmikMode(true)}
+                className="text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-full shadow-sm flex items-center gap-2"
+              >
+                🎤 {lang === "en" ? "Tasmik" : "Tasmik"}
+              </button>
+              <button 
+                onClick={() => setGlobalRevealState(!globalRevealState)}
+                className="text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-700 px-4 py-2 rounded-full shadow-sm"
+              >
+                {globalRevealState 
+                  ? (lang === "en" ? "🙈 Hide All" : "🙈 Sembunyi Semua") 
+                  : (lang === "en" ? "👀 Show All" : "👀 Papar Semua")}
+              </button>
+            </div>
           )}
         </div>
 
