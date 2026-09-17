@@ -2,6 +2,7 @@ import { useEffect, useState, useMemo } from "react";
 import { surahs } from "./data/surahs";
 import { supabase } from "./supabase";
 import Auth from "./Auth";
+import SolatTracker from "./SolatTracker";
 
 function getMalaysiaDateParts(date = new Date()) {
   const formatter = new Intl.DateTimeFormat("en-CA", {
@@ -103,6 +104,7 @@ function App() {
   const [editingId, setEditingId] = useState(null);
   
   const [activeTab, setActiveTab] = useState("history");
+  const [appMode, setAppMode] = useState("quran");
   
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [lang, setLang] = useState("en");
@@ -908,7 +910,29 @@ function App() {
 
         </header>
 
-        {/* Continue Reading */}
+        {/* App Mode Switcher */}
+        <div className="flex bg-stone-200 p-1 rounded-2xl mb-8">
+          <button
+            onClick={() => setAppMode("quran")}
+            className={`flex-1 py-3 text-sm font-bold rounded-xl transition-colors ${appMode === "quran" ? "bg-white text-emerald-800 shadow-sm" : "text-stone-500 hover:text-stone-700"}`}
+          >
+            📖 Quran
+          </button>
+          <button
+            onClick={() => setAppMode("solat")}
+            className={`flex-1 py-3 text-sm font-bold rounded-xl transition-colors ${appMode === "solat" ? "bg-white text-emerald-800 shadow-sm" : "text-stone-500 hover:text-stone-700"}`}
+          >
+            🕌 Solat
+          </button>
+        </div>
+
+        {appMode === "solat" && (
+          <SolatTracker session={session} lang={lang} />
+        )}
+
+        {appMode === "quran" && (
+          <>
+            {/* Continue Reading */}
         <section className="rounded-3xl bg-emerald-800 p-6 text-white shadow-sm">
 
           <p className="text-sm font-medium text-emerald-200">
@@ -1614,6 +1638,7 @@ function App() {
             </div>
           </section>
         )}
+        </>}
 
       </div>
     </div>
