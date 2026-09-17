@@ -1,6 +1,8 @@
 export const normalizeArabic = (text) => {
   if (!text) return "";
-  return text
+  let normalized = text
+    // Remove Zero-Width No-Break Space / BOM (often at the start of API strings)
+    .replace(/\uFEFF/g, '')
     // Convert Dagger Alif to regular Alif so it matches standard speech recognition text
     .replace(/\u0670/g, 'ا')
     // Remove Arabic diacritics (tashkeel/harakat), excluding \u0670 which we just handled
@@ -16,5 +18,10 @@ export const normalizeArabic = (text) => {
     // Collapse whitespace
     .replace(/\s+/g, ' ')
     .trim();
+
+  // Handle common spelling discrepancies between Uthmani Dagger Alif and Modern Standard Arabic
+  normalized = normalized.replace(/الرحمان/g, 'الرحمن');
+  
+  return normalized;
 };
 
