@@ -2,6 +2,42 @@ import { useState } from "react";
 import { surahs } from "../../data/surahs";
 import { getSurahText } from "../../utils/arabicText";
 
+function AyahCard({ ayah, lang }) {
+  const [isRevealed, setIsRevealed] = useState(false);
+
+  return (
+    <div 
+      onClick={() => setIsRevealed(!isRevealed)}
+      className={`p-6 rounded-2xl shadow-sm border-2 cursor-pointer transition-all ${isRevealed ? 'bg-white border-emerald-100' : 'bg-stone-50 border-stone-200 hover:bg-stone-100'}`}
+    >
+      <div className="flex justify-between items-center mb-2">
+        <span className="text-sm font-bold text-stone-400">
+          {lang === "en" ? "Ayah" : "Ayat"} {ayah.ayah}
+        </span>
+        <span className="text-xs font-medium text-emerald-600 bg-emerald-50 px-2 py-1 rounded-md">
+          {isRevealed ? (lang === "en" ? "Tap to hide" : "Tekan untuk sembunyi") : (lang === "en" ? "Tap to reveal" : "Tekan untuk papar")}
+        </span>
+      </div>
+
+      <div className={`transition-all duration-300 ${isRevealed ? 'opacity-100 blur-none' : 'opacity-0 h-0 overflow-hidden blur-md'}`}>
+        <p 
+          dir="rtl" 
+          className="text-3xl leading-loose text-stone-900 text-right mt-4"
+          style={{ fontFamily: "'Amiri', 'Traditional Arabic', serif" }}
+        >
+          {ayah.text}
+        </p>
+      </div>
+
+      {!isRevealed && (
+        <div className="h-12 flex items-center justify-center">
+          <p className="text-stone-400 font-medium">???</p>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function HafazanHome({ session, lang }) {
   const [selectedSurah, setSelectedSurah] = useState(null);
   const [surahText, setSurahText] = useState([]);
@@ -38,25 +74,7 @@ export default function HafazanHome({ session, lang }) {
         ) : (
           <div className="space-y-4">
             {surahText.map((ayah) => (
-              <div key={ayah.ayah} className="p-5 bg-white rounded-2xl shadow-sm border-2 border-stone-100 flex flex-col items-end">
-                <p 
-                  dir="rtl" 
-                  className="text-3xl leading-loose text-stone-900"
-                  style={{ fontFamily: "'Amiri', 'Traditional Arabic', serif" }}
-                >
-                  {ayah.text} <span className="inline-block text-emerald-600 text-xl mx-2 font-sans opacity-70">({ayah.ayah})</span>
-                </p>
-                
-                {/* Placeholder for future memorize buttons */}
-                <div className="mt-4 flex gap-2 w-full justify-start border-t border-stone-100 pt-3">
-                  <button className="text-xs font-bold text-emerald-700 bg-emerald-50 px-3 py-1 rounded-lg hover:bg-emerald-100">
-                    {lang === "en" ? "Memorize" : "Hafal"}
-                  </button>
-                  <button className="text-xs font-bold text-stone-500 bg-stone-100 px-3 py-1 rounded-lg hover:bg-stone-200">
-                    {lang === "en" ? "Play Audio" : "Main Audio"}
-                  </button>
-                </div>
-              </div>
+              <AyahCard key={ayah.ayah} ayah={ayah} lang={lang} />
             ))}
           </div>
         )}
