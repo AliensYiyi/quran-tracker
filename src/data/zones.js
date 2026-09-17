@@ -68,3 +68,4 @@ export const malaysiaZones = [
   { state: "Wilayah Persekutuan", code: "WLY01", name: "Kuala Lumpur, Putrajaya" },
   { state: "Wilayah Persekutuan", code: "WLY02", name: "Labuan" }
 ];
+
