@@ -1,8 +1,10 @@
 export const normalizeArabic = (text) => {
   if (!text) return "";
   return text
-    // Remove Arabic diacritics (tashkeel/harakat)
-    .replace(/[\u0610-\u061A\u064B-\u065F\u0670\u06D6-\u06DC\u06DF-\u06E8\u06EA-\u06ED]/g, '')
+    // Convert Dagger Alif to regular Alif so it matches standard speech recognition text
+    .replace(/\u0670/g, 'ا')
+    // Remove Arabic diacritics (tashkeel/harakat), excluding \u0670 which we just handled
+    .replace(/[\u0610-\u061A\u064B-\u065F\u06D6-\u06DC\u06DF-\u06E8\u06EA-\u06ED]/g, '')
     // Normalize various forms of Alif (including Alif Waslah ٱ) to bare Alif
     .replace(/[أإآٱ]/g, 'ا')
     // Normalize Taa Marbutah to Haa (common in speech recognition)
