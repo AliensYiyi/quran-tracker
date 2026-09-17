@@ -3,6 +3,45 @@ import { surahs } from "./data/surahs";
 import { supabase } from "./supabase";
 import Auth from "./Auth";
 
+function getMalaysiaDateParts(date = new Date()) {
+  const formatter = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Kuala_Lumpur",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  });
+
+  const parts = {};
+  formatter.formatToParts(date).forEach(({ type, value }) => {
+    if (type !== "literal") {
+      parts[type] = value;
+    }
+  });
+
+  return {
+    year: Number(parts.year),
+    month: Number(parts.month),
+    day: Number(parts.day),
+  };
+}
+
+function getMalaysiaDateKey(date = new Date()) {
+  const { year, month, day } = getMalaysiaDateParts(date);
+  return `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+}
+
+function addDaysToDateKey(dateKey, offset) {
+  const [year, month, day] = dateKey.split("-").map(Number);
+  const utcDate = new Date(Date.UTC(year, month - 1, day));
+  utcDate.setUTCDate(utcDate.getUTCDate() + offset);
+
+  const nextYear = utcDate.getUTCFullYear();
+  const nextMonth = String(utcDate.getUTCMonth() + 1).padStart(2, "0");
+  const nextDay = String(utcDate.getUTCDate()).padStart(2, "0");
+
+  return `${nextYear}-${nextMonth}-${nextDay}`;
+}
+
 function getNextReading(reading) {
   if (!reading) return null;
 
@@ -227,10 +266,10 @@ function App() {
           readAyahsBySurah[session.surahId].add(i);
         }
       }
-      
-      const d = new Date(session.createdAt || session.date);
-      uniqueDates.add(d.toDateString());
-      uniqueDateStrings.add(d.toISOString().split("T")[0]);
+
+      const dateKey = getMalaysiaDateKey(new Date(session.createdAt || session.date));
+      uniqueDates.add(dateKey);
+      uniqueDateStrings.add(dateKey);
     });
 
     let totalAyahs = 0;
@@ -248,28 +287,28 @@ function App() {
 
     // Streak Calculation
     let streak = 0;
-    let today = new Date();
-    let checkDate = new Date(today);
+    let todayKey = getMalaysiaDateKey();
+    let checkKey = todayKey;
 
-    if (uniqueDates.has(checkDate.toDateString())) {
+    if (uniqueDates.has(checkKey)) {
       streak++;
-      checkDate.setDate(checkDate.getDate() - 1);
+      checkKey = addDaysToDateKey(checkKey, -1);
     } else {
-      checkDate.setDate(checkDate.getDate() - 1);
-      if (uniqueDates.has(checkDate.toDateString())) {
+      checkKey = addDaysToDateKey(checkKey, -1);
+      if (uniqueDates.has(checkKey)) {
         streak++;
-        checkDate.setDate(checkDate.getDate() - 1);
+        checkKey = addDaysToDateKey(checkKey, -1);
       }
     }
 
-    while (streak > 0 && uniqueDates.has(checkDate.toDateString())) {
+    while (streak > 0 && uniqueDates.has(checkKey)) {
       streak++;
-      checkDate.setDate(checkDate.getDate() - 1);
+      checkKey = addDaysToDateKey(checkKey, -1);
     }
 
     // Calendar for current month
-    const currentYear = today.getFullYear();
-    const currentMonth = today.getMonth();
+    const currentYear = getMalaysiaDateParts().year;
+    const currentMonth = getMalaysiaDateParts().month - 1;
     const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
     const firstDay = new Date(currentYear, currentMonth, 1).getDay();
     const startOffset = firstDay === 0 ? 6 : firstDay - 1; // Monday start
@@ -284,9 +323,12 @@ function App() {
 
     const readingDaysThisMonth = new Set(
       readingSessions
-        .map((s) => new Date(s.createdAt || s.date))
-        .filter((d) => d.getFullYear() === currentYear && d.getMonth() === currentMonth)
-        .map((d) => d.getDate())
+        .map((s) => getMalaysiaDateKey(new Date(s.createdAt || s.date)))
+        .filter((dateKey) => {
+          const [year, month] = dateKey.split('-').map(Number);
+          return year === currentYear && month - 1 === currentMonth;
+        })
+        .map((dateKey) => Number(dateKey.slice(8, 10)))
     );
 
     return {
@@ -325,7 +367,7 @@ function App() {
       to_ayah: quickAyah,
       source: lastReading ? lastReading.source : "physical",
       is_standalone: false,
-      date: new Date().toLocaleDateString()
+      date: getMalaysiaDateKey()
     };
 
     const localReading = {
@@ -433,7 +475,7 @@ function App() {
         to_ayah: to,
         source: source,
         is_standalone: isStandalone,
-        date: new Date().toLocaleDateString()
+        date: getMalaysiaDateKey()
       };
       
       const localReading = {
