@@ -1,0 +1,100 @@
+import { useState } from "react";
+import { surahs } from "../../data/surahs";
+import { getSurahText } from "../../utils/arabicText";
+
+export default function HafazanHome({ session, lang }) {
+  const [selectedSurah, setSelectedSurah] = useState(null);
+  const [surahText, setSurahText] = useState([]);
+  const [loading, setLoading] = useState(false);
+
+  const openSurah = async (surah) => {
+    setSelectedSurah(surah);
+    setLoading(true);
+    const textData = await getSurahText(surah.id);
+    setSurahText(textData);
+    setLoading(false);
+  };
+
+  if (selectedSurah) {
+    return (
+      <div className="space-y-6">
+        <button 
+          onClick={() => setSelectedSurah(null)} 
+          className="flex items-center gap-2 text-sm font-bold text-stone-500 hover:text-emerald-700 bg-stone-200 px-4 py-2 rounded-full w-fit"
+        >
+          &larr; {lang === "en" ? "Back" : "Kembali"}
+        </button>
+
+        <div className="text-center bg-emerald-800 text-white rounded-3xl p-6 shadow-sm">
+          <h2 className="text-3xl font-bold mb-1">{selectedSurah.arabic}</h2>
+          <p className="text-emerald-200 font-medium">{selectedSurah.name}</p>
+          <p className="text-emerald-300 text-sm mt-2">{selectedSurah.ayahs} Ayahs</p>
+        </div>
+
+        {loading ? (
+          <div className="text-center py-10 text-stone-500">
+            {lang === "en" ? "Loading Quran text..." : "Memuatkan teks Al-Quran..."}
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {surahText.map((ayah) => (
+              <div key={ayah.ayah} className="p-5 bg-white rounded-2xl shadow-sm border-2 border-stone-100 flex flex-col items-end">
+                <p 
+                  dir="rtl" 
+                  className="text-3xl leading-loose text-stone-900"
+                  style={{ fontFamily: "'Amiri', 'Traditional Arabic', serif" }}
+                >
+                  {ayah.text} <span className="inline-block text-emerald-600 text-xl mx-2 font-sans opacity-70">({ayah.ayah})</span>
+                </p>
+                
+                {/* Placeholder for future memorize buttons */}
+                <div className="mt-4 flex gap-2 w-full justify-start border-t border-stone-100 pt-3">
+                  <button className="text-xs font-bold text-emerald-700 bg-emerald-50 px-3 py-1 rounded-lg hover:bg-emerald-100">
+                    {lang === "en" ? "Memorize" : "Hafal"}
+                  </button>
+                  <button className="text-xs font-bold text-stone-500 bg-stone-100 px-3 py-1 rounded-lg hover:bg-stone-200">
+                    {lang === "en" ? "Play Audio" : "Main Audio"}
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      <h2 className="text-xl font-bold text-stone-900 mb-6">
+        {lang === "en" ? "Select a Surah to Memorize" : "Pilih Surah untuk Hafazan"}
+      </h2>
+      
+      <div className="grid grid-cols-1 gap-3">
+        {surahs.map((surah) => (
+          <button
+            key={surah.id}
+            onClick={() => openSurah(surah)}
+            className="flex items-center justify-between p-4 bg-white rounded-2xl shadow-sm hover:shadow-md hover:-translate-y-0.5 border border-stone-100 text-left transition-all"
+          >
+            <div className="flex items-center gap-4">
+              <div className="w-10 h-10 rounded-full bg-emerald-100 text-emerald-800 flex items-center justify-center font-bold">
+                {surah.id}
+              </div>
+              <div>
+                <span className="font-bold text-stone-800 text-lg block">{surah.name}</span>
+                <span className="text-sm text-stone-500">{surah.ayahs} {lang === "en" ? "Ayahs" : "Ayat"}</span>
+              </div>
+            </div>
+            <span 
+              className="text-2xl text-emerald-800"
+              style={{ fontFamily: "'Amiri', 'Traditional Arabic', serif" }}
+            >
+              {surah.arabic}
+            </span>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
