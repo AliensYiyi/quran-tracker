@@ -73,7 +73,11 @@ export default function SolatTracker({ session, lang }) {
         asar: false,
         maghrib: false,
         isyak: false,
-        qada_count: 0,
+        qada_subuh: 0,
+        qada_zohor: 0,
+        qada_asar: 0,
+        qada_maghrib: 0,
+        qada_isyak: 0,
       }
     );
   }, [solatRecords, todayDateStr]);
@@ -112,19 +116,38 @@ export default function SolatTracker({ session, lang }) {
     return currentStreak;
   }, [solatRecords, todayDateStr]);
 
-  // Dashboard Stats
+  // Dashboard Stats Breakdown
   const dashboardStats = useMemo(() => {
-    let missed = 0;
-    let qadaDone = 0;
+    const stats = {
+      subuh: { missed: 0, qada: 0 },
+      zohor: { missed: 0, qada: 0 },
+      asar: { missed: 0, qada: 0 },
+      maghrib: { missed: 0, qada: 0 },
+      isyak: { missed: 0, qada: 0 },
+    };
+
+    let totalMissed = 0;
+    let totalQada = 0;
+
     solatRecords.forEach(r => {
-      if (!r.subuh) missed++;
-      if (!r.zohor) missed++;
-      if (!r.asar) missed++;
-      if (!r.maghrib) missed++;
-      if (!r.isyak) missed++;
-      qadaDone += (r.qada_count || 0);
+      // Missed
+      if (!r.subuh) { stats.subuh.missed++; totalMissed++; }
+      if (!r.zohor) { stats.zohor.missed++; totalMissed++; }
+      if (!r.asar) { stats.asar.missed++; totalMissed++; }
+      if (!r.maghrib) { stats.maghrib.missed++; totalMissed++; }
+      if (!r.isyak) { stats.isyak.missed++; totalMissed++; }
+
+      // Qada done (assuming new columns qada_subuh, qada_zohor, etc.)
+      stats.subuh.qada += (r.qada_subuh || 0);
+      stats.zohor.qada += (r.qada_zohor || 0);
+      stats.asar.qada += (r.qada_asar || 0);
+      stats.maghrib.qada += (r.qada_maghrib || 0);
+      stats.isyak.qada += (r.qada_isyak || 0);
+      
+      totalQada += ((r.qada_subuh || 0) + (r.qada_zohor || 0) + (r.qada_asar || 0) + (r.qada_maghrib || 0) + (r.qada_isyak || 0));
     });
-    return { missed, qadaDone, netRemaining: Math.max(0, missed - qadaDone) };
+
+    return { stats, totalMissed, totalQada, netRemaining: Math.max(0, totalMissed - totalQada) };
   }, [solatRecords]);
 
   const updateSolat = async (field, value) => {
@@ -158,7 +181,11 @@ export default function SolatTracker({ session, lang }) {
           asar: newRecord.asar,
           maghrib: newRecord.maghrib,
           isyak: newRecord.isyak,
-          qada_count: newRecord.qada_count,
+          qada_subuh: newRecord.qada_subuh,
+          qada_zohor: newRecord.qada_zohor,
+          qada_asar: newRecord.qada_asar,
+          qada_maghrib: newRecord.qada_maghrib,
+          qada_isyak: newRecord.qada_isyak,
         })
         .select()
         .single();
@@ -306,31 +333,51 @@ export default function SolatTracker({ session, lang }) {
         </div>
       </div>
 
-      {/* Qada Tracker */}
+      {/* Qada Tracker Breakdown */}
       <div className="rounded-3xl bg-white p-6 shadow-sm border-2 border-stone-100">
-        <div className="text-center">
+        <div className="text-center mb-6">
           <p className="text-sm font-medium text-stone-500 uppercase tracking-wider">{lang === "en" ? "Qada Prayers" : "Solat Qada"}</p>
           <h3 className="mt-1 text-2xl font-bold text-stone-900">{lang === "en" ? "Replaced Today" : "Diganti Hari Ini"}</h3>
-          
-          <div className="mt-4 flex items-center justify-center gap-6">
-            <button 
-              onClick={() => updateSolat("qada_count", Math.max(0, todayRecord.qada_count - 1))}
-              className="h-14 w-14 rounded-full bg-stone-100 text-2xl font-bold text-stone-600 hover:bg-stone-200"
-            >
-              -
-            </button>
-            
-            <div className="w-24">
-              <p className="text-5xl font-bold text-emerald-700">{todayRecord.qada_count}</p>
-            </div>
-            
-            <button 
-              onClick={() => updateSolat("qada_count", todayRecord.qada_count + 1)}
-              className="h-14 w-14 rounded-full bg-emerald-100 text-2xl font-bold text-emerald-700 hover:bg-emerald-200"
-            >
-              +
-            </button>
-          </div>
+        </div>
+        
+        <div className="space-y-4">
+          {prayers.map((prayer) => {
+            const qadaField = `qada_${prayer.id}`;
+            const missedCount = dashboardStats.stats[prayer.id].missed;
+            const qadaDoneTotal = dashboardStats.stats[prayer.id].qada;
+            const remaining = Math.max(0, missedCount - qadaDoneTotal);
+
+            return (
+              <div key={prayer.id} className="flex items-center justify-between p-3 rounded-2xl bg-stone-50 border border-stone-100">
+                <div>
+                  <span className="font-bold text-stone-800 block">{prayer.label}</span>
+                  <span className={`text-xs font-semibold mt-1 block ${remaining === 0 ? 'text-emerald-600' : 'text-red-500'}`}>
+                    {remaining} {lang === "en" ? "left" : "baki"}
+                  </span>
+                </div>
+                
+                <div className="flex items-center gap-4">
+                  <button 
+                    onClick={() => updateSolat(qadaField, Math.max(0, todayRecord[qadaField] - 1))}
+                    className="h-10 w-10 rounded-full bg-stone-200 text-lg font-bold text-stone-600 hover:bg-stone-300"
+                  >
+                    -
+                  </button>
+                  
+                  <div className="w-8 text-center">
+                    <p className="text-xl font-bold text-emerald-700">{todayRecord[qadaField]}</p>
+                  </div>
+                  
+                  <button 
+                    onClick={() => updateSolat(qadaField, todayRecord[qadaField] + 1)}
+                    className="h-10 w-10 rounded-full bg-emerald-100 text-lg font-bold text-emerald-700 hover:bg-emerald-200"
+                  >
+                    +
+                  </button>
+                </div>
+              </div>
+            );
+          })}
         </div>
       </div>
 
