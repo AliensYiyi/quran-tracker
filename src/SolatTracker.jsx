@@ -217,35 +217,27 @@ export default function SolatTracker({ session, lang }) {
         <h2 className="text-xl font-bold text-stone-900 mb-4">{lang === "en" ? "Solat Dashboard" : "Papan Pemuka Solat"}</h2>
         
         <div className="grid grid-cols-2 gap-3">
-          <div className="bg-red-50 rounded-2xl p-4 text-center">
-            <p className="text-sm font-medium text-red-800">{lang === "en" ? "Missed" : "Tertinggal"}</p>
-            <p className="text-3xl font-bold text-red-600 mt-1">{dashboardStats.missed}</p>
+          <div className={`rounded-2xl p-4 text-center flex flex-col justify-center items-center ${dashboardStats.netRemaining === 0 ? 'bg-emerald-100' : 'bg-stone-100'}`}>
+            <p className="text-sm font-medium text-stone-600">{lang === "en" ? "Qada Left" : "Baki Qada"}</p>
+            <p className={`text-4xl font-bold mt-1 ${dashboardStats.netRemaining === 0 ? 'text-emerald-700' : 'text-stone-900'}`}>
+              {dashboardStats.netRemaining}
+            </p>
+            {dashboardStats.netRemaining === 0 && (
+              <p className="text-xs font-bold text-emerald-600 mt-1 uppercase tracking-widest">{lang === "en" ? "All Clear!" : "Selesai Semua!"}</p>
+            )}
           </div>
-          <div className="bg-emerald-50 rounded-2xl p-4 text-center">
-            <p className="text-sm font-medium text-emerald-800">{lang === "en" ? "Qada Done" : "Qada Selesai"}</p>
-            <p className="text-3xl font-bold text-emerald-600 mt-1">{dashboardStats.qadaDone}</p>
+
+          <div className={`rounded-2xl p-4 text-center flex flex-col justify-center items-center ${streak > 0 ? 'bg-amber-100' : 'bg-stone-100'}`}>
+            <div className="text-2xl mb-1 emoji">{streak > 0 ? "🔥" : "🌱"}</div>
+            <p className={`text-2xl font-bold mt-1 ${streak > 0 ? 'text-amber-900' : 'text-stone-500'}`}>
+              {streak}
+            </p>
+            <p className={`text-xs font-medium mt-1 ${streak > 0 ? 'text-amber-800' : 'text-stone-400'}`}>
+              {lang === "en" ? "Day Streak" : "Hari Berturut"}
+            </p>
           </div>
-        </div>
-        
-        <div className={`mt-3 rounded-2xl p-4 text-center ${dashboardStats.netRemaining === 0 ? 'bg-emerald-100' : 'bg-stone-100'}`}>
-          <p className="text-sm font-medium text-stone-600">{lang === "en" ? "Remaining to Qada" : "Baki Perlu Qada"}</p>
-          <p className={`text-4xl font-bold mt-1 ${dashboardStats.netRemaining === 0 ? 'text-emerald-700' : 'text-stone-900'}`}>
-            {dashboardStats.netRemaining}
-          </p>
-          {dashboardStats.netRemaining === 0 && (
-            <p className="text-xs font-bold text-emerald-600 mt-1 uppercase tracking-widest">{lang === "en" ? "All Clear!" : "Selesai Semua!"}</p>
-          )}
         </div>
       </div>
-
-      {/* Streak */}
-      {streak > 0 && (
-        <div className="rounded-3xl bg-amber-100 p-6 flex flex-col items-center shadow-sm">
-          <div className="text-4xl mb-2 emoji">🔥</div>
-          <h2 className="text-2xl font-bold text-amber-900">{streak} {lang === "en" ? "Day Streak" : "Hari Berturut"}</h2>
-          <p className="text-amber-800 text-sm">{lang === "en" ? "Perfect 5 prayers!" : "Sempurna 5 waktu!"}</p>
-        </div>
-      )}
 
       {/* Waktu Solat Widget */}
       <div className="rounded-3xl bg-emerald-800 p-6 text-white shadow-sm">
