@@ -82,26 +82,21 @@ export default function TasmikScreen({ surah, surahText, lang, onBack }) {
 
     let matchCount = 0;
     expectedWords.forEach(word => {
-      // Very forgiving: check if any spoken word is a substring of the expected word, or vice-versa
-      // We lower the length requirement to 2 characters so short words can pass
-      if (spokenWords.some(w => w === word || (w.length >= 2 && word.includes(w)) || (word.length >= 2 && w.includes(word)))) {
-        matchCount++;
-      }
       const strippedWord = fuzzyStrip(word);
       
-      // Check if any spoken word matches fuzzily
       const isMatch = spokenWords.some(w => {
         const strippedW = fuzzyStrip(w);
         
-        // Direct match of the normalized word
+        // Direct match
         if (w === word) return true;
         
-        // Substring match
-        if ((w.length >= 2 && word.includes(w)) || (word.length >= 2 && w.includes(word))) return true;
+        // Substring match requires at least 4 characters to prevent random matches
+        if ((w.length >= 4 && word.includes(w)) || (word.length >= 4 && w.includes(word))) return true;
         
-        // Fuzzy stripped match (e.g. "الرحمن" vs "الرحمان" both become "رحمن" -> "رحمن")
-        if (strippedW.length >= 2 && strippedWord.length >= 2) {
-          if (strippedW === strippedWord || strippedWord.includes(strippedW) || strippedW.includes(strippedWord)) return true;
+        // Fuzzy stripped match requires exact core match, or 4+ characters for substring
+        if (strippedW.length >= 3 && strippedWord.length >= 3) {
+          if (strippedW === strippedWord) return true;
+          if (strippedW.length >= 4 && (strippedWord.includes(strippedW) || strippedWord.includes(strippedW))) return true;
         }
         
         return false;
@@ -112,14 +107,12 @@ export default function TasmikScreen({ surah, surahText, lang, onBack }) {
 
     const matchPercentage = matchCount / expectedWords.length;
 
-    // Is it a very short ayah? (1 or 2 words, like Al-Qariah or Wal-Asr)
-    const isShortAyah = expectedWords.length <= 2;
+    // Strict threshold: User must get at least 70% of the words correct.
+    // For a 2-word Ayah, 70% means they need 2 words. 
+    // We will relax 2-word Ayahs to require at least 1 word (50%) since the mic often misses one.
+    const passThreshold = expectedWords.length <= 2 ? 0.49 : 0.70;
 
-    // Extremely forgiving threshold:
-    // - If it's a short ayah, just ONE matched word passes it.
-    // - Otherwise, pass if they match 25% of words, OR get at least 2 words right,
-    // - OR if the spoken text contains the expected text.
-    if ((isShortAyah && matchCount >= 1) || matchPercentage >= 0.25 || matchCount >= 2 || normSpoken.includes(normExpected)) {
+    if (matchPercentage >= passThreshold || normSpoken.includes(normExpected)) {
       markCorrect();
     } else {
       setStatus("wrong");
@@ -270,9 +263,10 @@ export default function TasmikScreen({ surah, surahText, lang, onBack }) {
                         const wasSaid = spokenWordsState.some(w => {
                           const strippedW = w.replace(/[الوي]/g, '');
                           if (w === normWord) return true;
-                          if ((w.length >= 2 && normWord.includes(w)) || (normWord.length >= 2 && w.includes(normWord))) return true;
-                          if (strippedW.length >= 2 && strippedWord.length >= 2) {
-                            if (strippedW === strippedWord || strippedWord.includes(strippedW) || strippedW.includes(strippedWord)) return true;
+                          if ((w.length >= 4 && normWord.includes(w)) || (normWord.length >= 4 && w.includes(normWord))) return true;
+                          if (strippedW.length >= 3 && strippedWord.length >= 3) {
+                            if (strippedW === strippedWord) return true;
+                            if (strippedW.length >= 4 && (strippedWord.includes(strippedW) || strippedW.includes(strippedWord))) return true;
                           }
                           return false;
                         });
