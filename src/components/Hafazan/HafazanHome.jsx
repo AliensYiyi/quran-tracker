@@ -64,8 +64,8 @@ export default function HafazanHome({ session, lang }) {
     );
   }
 
-  // Ayat Lazim: Al-Fatihah (1) and Juz 30 (78 to 114)
-  const ayatLazimIds = [1, ...Array.from({ length: 37 }, (_, i) => i + 78)];
+  // Ayat Lazim: Al-Fatihah (1) and Ad-Duha (93) to An-Nas (114)
+  const ayatLazimIds = [1, ...Array.from({ length: 22 }, (_, i) => i + 93)];
   const lazimSurahs = surahs.filter((s) => ayatLazimIds.includes(s.id));
 
   return (
