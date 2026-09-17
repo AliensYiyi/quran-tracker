@@ -82,6 +82,11 @@ export default function TasmikScreen({ surah, surahText, lang, onBack }) {
 
     let matchCount = 0;
     expectedWords.forEach(word => {
+      // Very forgiving: check if any spoken word is a substring of the expected word, or vice-versa
+      // We lower the length requirement to 2 characters so short words can pass
+      if (spokenWords.some(w => w === word || (w.length >= 2 && word.includes(w)) || (word.length >= 2 && w.includes(word)))) {
+        matchCount++;
+      }
       const strippedWord = fuzzyStrip(word);
       
       // Check if any spoken word matches fuzzily
