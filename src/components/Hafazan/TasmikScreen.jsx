@@ -76,13 +76,33 @@ export default function TasmikScreen({ surah, surahText, lang, onBack }) {
     
     const expectedWords = normExpected.split(" ");
     
+    // Helper to strip common problematic letters for fuzzy phonetic matching
+    // (e.g. Alif, Lam, Waw, Yaa are often misheard or spelled differently by Speech API)
+    const fuzzyStrip = (w) => w.replace(/[الوي]/g, '');
+
     let matchCount = 0;
     expectedWords.forEach(word => {
-      // Very forgiving: check if any spoken word is a substring of the expected word, or vice-versa
-      // We lower the length requirement to 2 characters so short words can pass
-      if (spokenWords.some(w => w === word || (w.length >= 2 && word.includes(w)) || (word.length >= 2 && w.includes(word)))) {
-        matchCount++;
-      }
+      const strippedWord = fuzzyStrip(word);
+      
+      // Check if any spoken word matches fuzzily
+      const isMatch = spokenWords.some(w => {
+        const strippedW = fuzzyStrip(w);
+        
+        // Direct match of the normalized word
+        if (w === word) return true;
+        
+        // Substring match
+        if ((w.length >= 2 && word.includes(w)) || (word.length >= 2 && w.includes(word))) return true;
+        
+        // Fuzzy stripped match (e.g. "الرحمن" vs "الرحمان" both become "رحمن" -> "رحمن")
+        if (strippedW.length >= 2 && strippedWord.length >= 2) {
+          if (strippedW === strippedWord || strippedWord.includes(strippedW) || strippedW.includes(strippedWord)) return true;
+        }
+        
+        return false;
+      });
+
+      if (isMatch) matchCount++;
     });
 
     const matchPercentage = matchCount / expectedWords.length;
@@ -240,7 +260,18 @@ export default function TasmikScreen({ surah, surahText, lang, onBack }) {
                     <div dir="rtl" className="text-3xl leading-loose text-right" style={{ fontFamily: "'Amiri', 'Traditional Arabic', serif" }}>
                       {ayah.text.split(" ").map((word, wIdx) => {
                         const normWord = normalizeArabic(word);
-                        const wasSaid = spokenWordsState.some(w => w.includes(normWord) || normWord.includes(w) && w.length > 2);
+                        const strippedWord = normWord.replace(/[الوي]/g, '');
+                        
+                        const wasSaid = spokenWordsState.some(w => {
+                          const strippedW = w.replace(/[الوي]/g, '');
+                          if (w === normWord) return true;
+                          if ((w.length >= 2 && normWord.includes(w)) || (normWord.length >= 2 && w.includes(normWord))) return true;
+                          if (strippedW.length >= 2 && strippedWord.length >= 2) {
+                            if (strippedW === strippedWord || strippedWord.includes(strippedW) || strippedW.includes(strippedWord)) return true;
+                          }
+                          return false;
+                        });
+
                         return (
                           <span key={wIdx} className={`mr-2 ${wasSaid ? 'text-emerald-600' : 'text-red-500 underline decoration-red-300'}`}>
                             {word}
