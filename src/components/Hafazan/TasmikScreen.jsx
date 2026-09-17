@@ -5,8 +5,10 @@ export default function TasmikScreen({ surah, surahText, lang, onBack }) {
   const [currentAyahIndex, setCurrentAyahIndex] = useState(0);
   const [isListening, setIsListening] = useState(false);
   const [transcript, setTranscript] = useState("");
+  const [spokenWordsState, setSpokenWordsState] = useState([]);
   const [status, setStatus] = useState("idle"); // 'idle', 'listening', 'correct', 'wrong'
   const [clueRequested, setClueRequested] = useState(false);
+  const [analysisRequested, setAnalysisRequested] = useState(false);
   
   const recognitionRef = useRef(null);
 
@@ -22,6 +24,7 @@ export default function TasmikScreen({ surah, surahText, lang, onBack }) {
       recognition.onstart = () => {
         setIsListening(true);
         setStatus("listening");
+        setAnalysisRequested(false);
       };
 
       recognition.onresult = (event) => {
@@ -68,9 +71,9 @@ export default function TasmikScreen({ surah, surahText, lang, onBack }) {
     const normSpoken = normalizeArabic(spokenText);
     const normExpected = normalizeArabic(expectedAyah);
 
-    // Simple matching logic: if the spoken text contains at least 50% of the words of the ayah
-    // (Voice recognition for Arabic is imperfect, so exact matching is too strict)
     const spokenWords = normSpoken.split(" ");
+    setSpokenWordsState(spokenWords);
+    
     const expectedWords = normExpected.split(" ");
     
     let matchCount = 0;
@@ -101,7 +104,9 @@ export default function TasmikScreen({ surah, surahText, lang, onBack }) {
       setCurrentAyahIndex(prev => prev + 1);
       setStatus("idle");
       setTranscript("");
+      setSpokenWordsState([]);
       setClueRequested(false);
+      setAnalysisRequested(false);
     }, 1500);
   };
 
@@ -174,12 +179,20 @@ export default function TasmikScreen({ surah, surahText, lang, onBack }) {
                 
                 {isCurrent && (
                   <div className="flex gap-2">
-                    {status === "wrong" && !clueRequested && (
+                    {status === "wrong" && !clueRequested && !analysisRequested && (
                       <button 
                         onClick={() => setClueRequested(true)}
                         className="text-xs font-bold bg-red-100 text-red-700 px-3 py-1 rounded-md hover:bg-red-200"
                       >
                         {lang === "en" ? "Get Clue" : "Perlu Klu"}
+                      </button>
+                    )}
+                    {status === "wrong" && !analysisRequested && (
+                      <button 
+                        onClick={() => setAnalysisRequested(true)}
+                        className="text-xs font-bold bg-amber-100 text-amber-800 px-3 py-1 rounded-md hover:bg-amber-200"
+                      >
+                        {lang === "en" ? "Analyze" : "Analisis"}
                       </button>
                     )}
                     {/* Manual Override Button */}
@@ -201,7 +214,19 @@ export default function TasmikScreen({ surah, surahText, lang, onBack }) {
               ) : isCurrent ? (
                 // Current Ayah logic
                 <div className="mt-4">
-                  {status === "wrong" && clueRequested ? (
+                  {status === "wrong" && analysisRequested ? (
+                    <div dir="rtl" className="text-3xl leading-loose text-right" style={{ fontFamily: "'Amiri', 'Traditional Arabic', serif" }}>
+                      {ayah.text.split(" ").map((word, wIdx) => {
+                        const normWord = normalizeArabic(word);
+                        const wasSaid = spokenWordsState.some(w => w.includes(normWord) || normWord.includes(w) && w.length > 2);
+                        return (
+                          <span key={wIdx} className={`mr-2 ${wasSaid ? 'text-emerald-600' : 'text-red-500 underline decoration-red-300'}`}>
+                            {word}
+                          </span>
+                        );
+                      })}
+                    </div>
+                  ) : status === "wrong" && clueRequested ? (
                     <p dir="rtl" className="text-3xl leading-loose text-red-900 text-right opacity-70" style={{ fontFamily: "'Amiri', 'Traditional Arabic', serif" }}>
                       {/* Show just the first 2 words as a clue */}
                       {ayah.text.split(" ").slice(0, 2).join(" ")} ...
