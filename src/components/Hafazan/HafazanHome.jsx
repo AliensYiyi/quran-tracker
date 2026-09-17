@@ -1,9 +1,14 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { surahs } from "../../data/surahs";
 import { getSurahText } from "../../utils/arabicText";
 
-function AyahCard({ ayah, lang }) {
-  const [isRevealed, setIsRevealed] = useState(false);
+function AyahCard({ ayah, lang, globalRevealState }) {
+  const [isRevealed, setIsRevealed] = useState(true);
+
+  // Sync with global "Hide All" / "Show All" button
+  useEffect(() => {
+    setIsRevealed(globalRevealState);
+  }, [globalRevealState]);
 
   return (
     <div 
@@ -42,9 +47,11 @@ export default function HafazanHome({ session, lang }) {
   const [selectedSurah, setSelectedSurah] = useState(null);
   const [surahText, setSurahText] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [globalRevealState, setGlobalRevealState] = useState(true);
 
   const openSurah = async (surah) => {
     setSelectedSurah(surah);
+    setGlobalRevealState(true); // default to show when opening
     setLoading(true);
     const textData = await getSurahText(surah.id);
     setSurahText(textData);
@@ -54,12 +61,25 @@ export default function HafazanHome({ session, lang }) {
   if (selectedSurah) {
     return (
       <div className="space-y-6">
-        <button 
-          onClick={() => setSelectedSurah(null)} 
-          className="flex items-center gap-2 text-sm font-bold text-stone-500 hover:text-emerald-700 bg-stone-200 px-4 py-2 rounded-full w-fit"
-        >
-          &larr; {lang === "en" ? "Back" : "Kembali"}
-        </button>
+        <div className="flex justify-between items-center">
+          <button 
+            onClick={() => setSelectedSurah(null)} 
+            className="flex items-center gap-2 text-sm font-bold text-stone-500 hover:text-emerald-700 bg-stone-200 px-4 py-2 rounded-full"
+          >
+            &larr; {lang === "en" ? "Back" : "Kembali"}
+          </button>
+          
+          {!loading && surahText.length > 0 && (
+            <button 
+              onClick={() => setGlobalRevealState(!globalRevealState)}
+              className="text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-700 px-4 py-2 rounded-full shadow-sm"
+            >
+              {globalRevealState 
+                ? (lang === "en" ? "🙈 Hide All" : "🙈 Sembunyi Semua") 
+                : (lang === "en" ? "👀 Show All" : "👀 Papar Semua")}
+            </button>
+          )}
+        </div>
 
         <div className="text-center bg-emerald-800 text-white rounded-3xl p-6 shadow-sm">
           <h2 className="text-3xl font-bold mb-1">{selectedSurah.arabic}</h2>
@@ -74,7 +94,7 @@ export default function HafazanHome({ session, lang }) {
         ) : (
           <div className="space-y-4">
             {surahText.map((ayah) => (
-              <AyahCard key={ayah.ayah} ayah={ayah} lang={lang} />
+              <AyahCard key={ayah.ayah} ayah={ayah} lang={lang} globalRevealState={globalRevealState} />
             ))}
           </div>
         )}
