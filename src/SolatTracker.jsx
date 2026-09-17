@@ -9,17 +9,22 @@ export default function SolatTracker({ session, lang }) {
   // Today's local date string (e.g. "2026-09-17")
   const todayDateStr = new Date().toLocaleDateString("en-CA"); // YYYY-MM-DD format
 
+  const [city, setCity] = useState(() => localStorage.getItem("solat_city") || "Kuala Lumpur");
+  const [country, setCountry] = useState(() => localStorage.getItem("solat_country") || "Malaysia");
+  const [isEditingLocation, setIsEditingLocation] = useState(false);
+  const [tempCity, setTempCity] = useState(city);
+  const [tempCountry, setTempCountry] = useState(country);
+
   useEffect(() => {
     fetchWaktuSolat();
     if (session) {
       fetchSolatRecords();
     }
-  }, [session]);
+  }, [session, city, country]);
 
   const fetchWaktuSolat = async () => {
     try {
-      // Using Aladhan API for Kuala Lumpur. In future, we can add geolocation.
-      const res = await fetch("https://api.aladhan.com/v1/timingsByCity?city=Kuala+Lumpur&country=Malaysia&method=11");
+      const res = await fetch(`https://api.aladhan.com/v1/timingsByCity?city=${encodeURIComponent(city)}&country=${encodeURIComponent(country)}&method=11`);
       const data = await res.json();
       if (data && data.data && data.data.timings) {
         setWaktuSolat({
@@ -34,6 +39,14 @@ export default function SolatTracker({ session, lang }) {
     } catch (err) {
       console.error("Failed to fetch Waktu Solat:", err);
     }
+  };
+
+  const saveLocation = () => {
+    setCity(tempCity);
+    setCountry(tempCountry);
+    localStorage.setItem("solat_city", tempCity);
+    localStorage.setItem("solat_country", tempCountry);
+    setIsEditingLocation(false);
   };
 
   const fetchSolatRecords = async () => {
@@ -99,6 +112,21 @@ export default function SolatTracker({ session, lang }) {
     return currentStreak;
   }, [solatRecords, todayDateStr]);
 
+  // Dashboard Stats
+  const dashboardStats = useMemo(() => {
+    let missed = 0;
+    let qadaDone = 0;
+    solatRecords.forEach(r => {
+      if (!r.subuh) missed++;
+      if (!r.zohor) missed++;
+      if (!r.asar) missed++;
+      if (!r.maghrib) missed++;
+      if (!r.isyak) missed++;
+      qadaDone += (r.qada_count || 0);
+    });
+    return { missed, qadaDone, netRemaining: Math.max(0, missed - qadaDone) };
+  }, [solatRecords]);
+
   const updateSolat = async (field, value) => {
     if (!session) return;
     
@@ -156,6 +184,32 @@ export default function SolatTracker({ session, lang }) {
   return (
     <div className="space-y-6">
       
+      {/* Dashboard Summary */}
+      <div className="rounded-3xl bg-white p-6 shadow-sm border-2 border-stone-100">
+        <h2 className="text-xl font-bold text-stone-900 mb-4">{lang === "en" ? "Solat Dashboard" : "Papan Pemuka Solat"}</h2>
+        
+        <div className="grid grid-cols-2 gap-3">
+          <div className="bg-red-50 rounded-2xl p-4 text-center">
+            <p className="text-sm font-medium text-red-800">{lang === "en" ? "Missed" : "Tertinggal"}</p>
+            <p className="text-3xl font-bold text-red-600 mt-1">{dashboardStats.missed}</p>
+          </div>
+          <div className="bg-emerald-50 rounded-2xl p-4 text-center">
+            <p className="text-sm font-medium text-emerald-800">{lang === "en" ? "Qada Done" : "Qada Selesai"}</p>
+            <p className="text-3xl font-bold text-emerald-600 mt-1">{dashboardStats.qadaDone}</p>
+          </div>
+        </div>
+        
+        <div className={`mt-3 rounded-2xl p-4 text-center ${dashboardStats.netRemaining === 0 ? 'bg-emerald-100' : 'bg-stone-100'}`}>
+          <p className="text-sm font-medium text-stone-600">{lang === "en" ? "Remaining to Qada" : "Baki Perlu Qada"}</p>
+          <p className={`text-4xl font-bold mt-1 ${dashboardStats.netRemaining === 0 ? 'text-emerald-700' : 'text-stone-900'}`}>
+            {dashboardStats.netRemaining}
+          </p>
+          {dashboardStats.netRemaining === 0 && (
+            <p className="text-xs font-bold text-emerald-600 mt-1 uppercase tracking-widest">{lang === "en" ? "All Clear!" : "Selesai Semua!"}</p>
+          )}
+        </div>
+      </div>
+
       {/* Streak */}
       {streak > 0 && (
         <div className="rounded-3xl bg-amber-100 p-6 flex flex-col items-center shadow-sm">
@@ -167,7 +221,13 @@ export default function SolatTracker({ session, lang }) {
 
       {/* Waktu Solat Widget */}
       <div className="rounded-3xl bg-emerald-800 p-6 text-white shadow-sm">
-        <h2 className="text-lg font-bold mb-4">{lang === "en" ? "Waktu Solat (Kuala Lumpur)" : "Waktu Solat (Kuala Lumpur)"}</h2>
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-lg font-bold">{lang === "en" ? "Waktu Solat" : "Waktu Solat"}</h2>
+          <button onClick={() => setIsEditingLocation(true)} className="text-sm font-medium text-emerald-200 hover:text-white underline decoration-emerald-500/50">
+            {city}, {country}
+          </button>
+        </div>
+        
         {waktuSolat ? (
           <div className="grid grid-cols-3 gap-4 text-center">
             {Object.entries(waktuSolat).map(([name, time]) => (
@@ -181,6 +241,50 @@ export default function SolatTracker({ session, lang }) {
           <p className="text-emerald-200 text-sm">Loading prayer times...</p>
         )}
       </div>
+
+      {isEditingLocation && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
+          <div className="w-full max-w-md rounded-3xl bg-white p-6 shadow-xl">
+            <h2 className="text-xl font-bold text-stone-900 mb-4">{lang === "en" ? "Edit Location" : "Tukar Lokasi"}</h2>
+            
+            <div className="space-y-4">
+              <div>
+                <label className="text-sm font-medium text-stone-700">City</label>
+                <input
+                  type="text"
+                  value={tempCity}
+                  onChange={(e) => setTempCity(e.target.value)}
+                  className="mt-2 w-full rounded-xl border border-stone-300 px-4 py-3 outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100"
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium text-stone-700">Country</label>
+                <input
+                  type="text"
+                  value={tempCountry}
+                  onChange={(e) => setTempCountry(e.target.value)}
+                  className="mt-2 w-full rounded-xl border border-stone-300 px-4 py-3 outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100"
+                />
+              </div>
+            </div>
+
+            <div className="mt-6 flex gap-3">
+              <button
+                onClick={() => setIsEditingLocation(false)}
+                className="flex-1 rounded-xl border border-stone-300 px-4 py-3 font-medium text-stone-700"
+              >
+                {lang === "en" ? "Cancel" : "Batal"}
+              </button>
+              <button
+                onClick={saveLocation}
+                className="flex-1 rounded-xl bg-emerald-700 px-4 py-3 font-bold text-white"
+              >
+                {lang === "en" ? "Save" : "Simpan"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Daily Checklist */}
       <div className="rounded-3xl bg-white p-6 shadow-sm">
@@ -233,3 +337,4 @@ export default function SolatTracker({ session, lang }) {
     </div>
   );
 }
+
