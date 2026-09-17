@@ -15,3 +15,4 @@ export const normalizeArabic = (text) => {
     .replace(/\s+/g, ' ')
     .trim();
 };
+

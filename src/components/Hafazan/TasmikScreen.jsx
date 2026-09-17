@@ -75,23 +75,34 @@ export default function TasmikScreen({ surah, surahText, lang, onBack }) {
     
     let matchCount = 0;
     expectedWords.forEach(word => {
-      if (spokenWords.includes(word)) matchCount++;
+      // Check if any spoken word contains the expected word, or vice-versa
+      // This is much more forgiving for weird accent interpretations
+      if (spokenWords.some(w => w.includes(word) || word.includes(w) && w.length > 2)) {
+        matchCount++;
+      }
     });
 
     const matchPercentage = matchCount / expectedWords.length;
 
-    if (matchPercentage >= 0.5 || normSpoken.includes(normExpected)) {
-      setStatus("correct");
-      // Wait a moment then move to next ayah
-      setTimeout(() => {
-        setCurrentAyahIndex(prev => prev + 1);
-        setStatus("idle");
-        setTranscript("");
-        setClueRequested(false);
-      }, 1500);
+    // Extremely forgiving threshold for kids: 
+    // Pass if they match 25% of words, OR if they get at least 2 words right (for long ayahs),
+    // OR if the spoken text contains the expected text.
+    if (matchPercentage >= 0.25 || matchCount >= 2 || normSpoken.includes(normExpected)) {
+      markCorrect();
     } else {
       setStatus("wrong");
     }
+  };
+
+  const markCorrect = () => {
+    setStatus("correct");
+    // Wait a moment then move to next ayah
+    setTimeout(() => {
+      setCurrentAyahIndex(prev => prev + 1);
+      setStatus("idle");
+      setTranscript("");
+      setClueRequested(false);
+    }, 1500);
   };
 
   const toggleListen = () => {
@@ -105,7 +116,7 @@ export default function TasmikScreen({ surah, surahText, lang, onBack }) {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pb-20">
       <div className="flex justify-between items-center">
         <button 
           onClick={onBack} 
@@ -161,13 +172,24 @@ export default function TasmikScreen({ surah, surahText, lang, onBack }) {
                   {lang === "en" ? "Ayah" : "Ayat"} {ayah.ayah}
                 </span>
                 
-                {isCurrent && status === "wrong" && !clueRequested && (
-                  <button 
-                    onClick={() => setClueRequested(true)}
-                    className="text-xs font-bold bg-red-100 text-red-700 px-3 py-1 rounded-md hover:bg-red-200"
-                  >
-                    {lang === "en" ? "Get Clue?" : "Perlu Klu?"}
-                  </button>
+                {isCurrent && (
+                  <div className="flex gap-2">
+                    {status === "wrong" && !clueRequested && (
+                      <button 
+                        onClick={() => setClueRequested(true)}
+                        className="text-xs font-bold bg-red-100 text-red-700 px-3 py-1 rounded-md hover:bg-red-200"
+                      >
+                        {lang === "en" ? "Get Clue" : "Perlu Klu"}
+                      </button>
+                    )}
+                    {/* Manual Override Button */}
+                    <button 
+                      onClick={markCorrect}
+                      className="text-xs font-bold bg-emerald-100 text-emerald-800 px-3 py-1 rounded-md hover:bg-emerald-200"
+                    >
+                      {lang === "en" ? "Manual Pass" : "Lulus Manual"}
+                    </button>
+                  </div>
                 )}
               </div>
 
@@ -217,3 +239,4 @@ export default function TasmikScreen({ surah, surahText, lang, onBack }) {
     </div>
   );
 }
+
