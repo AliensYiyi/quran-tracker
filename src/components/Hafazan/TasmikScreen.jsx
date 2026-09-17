@@ -76,43 +76,19 @@ export default function TasmikScreen({ surah, surahText, lang, onBack }) {
     
     const expectedWords = normExpected.split(" ");
     
-    // Helper to strip common problematic letters for fuzzy phonetic matching
-    // (e.g. Alif, Lam, Waw, Yaa are often misheard or spelled differently by Speech API)
-    const fuzzyStrip = (w) => w.replace(/[الوي]/g, '');
-
     let matchCount = 0;
     expectedWords.forEach(word => {
-      const strippedWord = fuzzyStrip(word);
-      
-      const isMatch = spokenWords.some(w => {
-        const strippedW = fuzzyStrip(w);
-        
-        // Direct match
-        if (w === word) return true;
-        
-        // Substring match requires at least 4 characters to prevent random matches
-        if ((w.length >= 4 && word.includes(w)) || (word.length >= 4 && w.includes(word))) return true;
-        
-        // Fuzzy stripped match requires exact core match, or 4+ characters for substring
-        if (strippedW.length >= 3 && strippedWord.length >= 3) {
-          if (strippedW === strippedWord) return true;
-          if (strippedW.length >= 4 && (strippedWord.includes(strippedW) || strippedWord.includes(strippedW))) return true;
-        }
-        
-        return false;
-      });
-
-      if (isMatch) matchCount++;
+      // Check if any spoken word contains the expected word, or vice-versa
+      // This is much more forgiving for weird accent interpretations
+      if (spokenWords.some(w => w.includes(word) || word.includes(w) && w.length > 2)) {
+        matchCount++;
+      }
     });
 
     const matchPercentage = matchCount / expectedWords.length;
 
-    // Strict threshold: User must get at least 70% of the words correct.
-    // For a 2-word Ayah, 70% means they need 2 words. 
-    // We will relax 2-word Ayahs to require at least 1 word (50%) since the mic often misses one.
-    const passThreshold = expectedWords.length <= 2 ? 0.49 : 0.70;
-
-    if (matchPercentage >= passThreshold || normSpoken.includes(normExpected)) {
+    // Strict 100% matching as requested by user
+    if (matchPercentage >= 1.0 || normSpoken.includes(normExpected)) {
       markCorrect();
     } else {
       setStatus("wrong");
@@ -258,19 +234,7 @@ export default function TasmikScreen({ surah, surahText, lang, onBack }) {
                     <div dir="rtl" className="text-3xl leading-loose text-right" style={{ fontFamily: "'Amiri', 'Traditional Arabic', serif" }}>
                       {ayah.text.split(" ").map((word, wIdx) => {
                         const normWord = normalizeArabic(word);
-                        const strippedWord = normWord.replace(/[الوي]/g, '');
-                        
-                        const wasSaid = spokenWordsState.some(w => {
-                          const strippedW = w.replace(/[الوي]/g, '');
-                          if (w === normWord) return true;
-                          if ((w.length >= 4 && normWord.includes(w)) || (normWord.length >= 4 && w.includes(normWord))) return true;
-                          if (strippedW.length >= 3 && strippedWord.length >= 3) {
-                            if (strippedW === strippedWord) return true;
-                            if (strippedW.length >= 4 && (strippedWord.includes(strippedW) || strippedW.includes(strippedWord))) return true;
-                          }
-                          return false;
-                        });
-
+                        const wasSaid = spokenWordsState.some(w => w.includes(normWord) || normWord.includes(w) && w.length > 2);
                         return (
                           <span key={wIdx} className={`mr-2 ${wasSaid ? 'text-emerald-600' : 'text-red-500 underline decoration-red-300'}`}>
                             {word}
