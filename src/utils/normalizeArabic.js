@@ -3,8 +3,8 @@ export const normalizeArabic = (text) => {
   return text
     // Remove Arabic diacritics (tashkeel/harakat)
     .replace(/[\u0610-\u061A\u064B-\u065F\u0670\u06D6-\u06DC\u06DF-\u06E8\u06EA-\u06ED]/g, '')
-    // Normalize various forms of Alif to bare Alif
-    .replace(/[أإآ]/g, 'ا')
+    // Normalize various forms of Alif (including Alif Waslah ٱ) to bare Alif
+    .replace(/[أإآٱ]/g, 'ا')
     // Normalize Taa Marbutah to Haa (common in speech recognition)
     .replace(/ة/g, 'ه')
     // Normalize Alif Maqsurah to Yaa
