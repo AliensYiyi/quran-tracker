@@ -21,6 +21,12 @@ export const normalizeArabic = (text) => {
 
   // Handle common spelling discrepancies between Uthmani Dagger Alif and Modern Standard Arabic
   normalized = normalized.replace(/الرحمان/g, 'الرحمن');
+  normalized = normalized.replace(/الاه/g, 'اله');
+  normalized = normalized.replace(/ذالك/g, 'ذلك');
+  normalized = normalized.replace(/هاذا/g, 'هذا');
+  normalized = normalized.replace(/هاذه/g, 'هذه');
+  normalized = normalized.replace(/لاكن/g, 'لكن');
+  normalized = normalized.replace(/سموات/g, 'سماوات');
   
   return normalized;
 };
