@@ -65,6 +65,7 @@ export const getSurahText = async (surahNumber) => {
         
         return {
           ayah: a.numberInSurah,
+          globalAyah: a.number,
           text: text
         };
       });

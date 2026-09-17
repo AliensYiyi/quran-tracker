@@ -120,6 +120,16 @@ export default function TasmikScreen({ surah, surahText, lang, onBack }) {
     }
   };
 
+  const playAudio = (globalAyah) => {
+    // If microphone is listening, stop it so it doesn't hear the audio
+    if (isListening) {
+      recognitionRef.current?.stop();
+    }
+    
+    const audio = new Audio(`https://cdn.islamic.network/quran/audio/128/ar.alafasy/${globalAyah}.mp3`);
+    audio.play();
+  };
+
   return (
     <div className="space-y-6 pb-20">
       <div className="flex justify-between items-center">
@@ -178,7 +188,15 @@ export default function TasmikScreen({ surah, surahText, lang, onBack }) {
                 </span>
                 
                 {isCurrent && (
-                  <div className="flex gap-2">
+                  <div className="flex flex-wrap justify-end gap-2 max-w-[70%]">
+                    {status === "wrong" && (
+                      <button 
+                        onClick={() => playAudio(ayah.globalAyah)}
+                        className="text-xs font-bold bg-blue-100 text-blue-800 px-3 py-1 rounded-md hover:bg-blue-200"
+                      >
+                        🔊 {lang === "en" ? "Listen" : "Dengar"}
+                      </button>
+                    )}
                     {status === "wrong" && !clueRequested && !analysisRequested && (
                       <button 
                         onClick={() => setClueRequested(true)}
