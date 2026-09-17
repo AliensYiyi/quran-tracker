@@ -78,19 +78,23 @@ export default function TasmikScreen({ surah, surahText, lang, onBack }) {
     
     let matchCount = 0;
     expectedWords.forEach(word => {
-      // Check if any spoken word contains the expected word, or vice-versa
-      // This is much more forgiving for weird accent interpretations
-      if (spokenWords.some(w => w.includes(word) || word.includes(w) && w.length > 2)) {
+      // Very forgiving: check if any spoken word is a substring of the expected word, or vice-versa
+      // We lower the length requirement to 2 characters so short words can pass
+      if (spokenWords.some(w => w === word || (w.length >= 2 && word.includes(w)) || (word.length >= 2 && w.includes(word)))) {
         matchCount++;
       }
     });
 
     const matchPercentage = matchCount / expectedWords.length;
 
-    // Extremely forgiving threshold for kids: 
-    // Pass if they match 25% of words, OR if they get at least 2 words right (for long ayahs),
-    // OR if the spoken text contains the expected text.
-    if (matchPercentage >= 0.25 || matchCount >= 2 || normSpoken.includes(normExpected)) {
+    // Is it a very short ayah? (1 or 2 words, like Al-Qariah or Wal-Asr)
+    const isShortAyah = expectedWords.length <= 2;
+
+    // Extremely forgiving threshold:
+    // - If it's a short ayah, just ONE matched word passes it.
+    // - Otherwise, pass if they match 25% of words, OR get at least 2 words right,
+    // - OR if the spoken text contains the expected text.
+    if ((isShortAyah && matchCount >= 1) || matchPercentage >= 0.25 || matchCount >= 2 || normSpoken.includes(normExpected)) {
       markCorrect();
     } else {
       setStatus("wrong");
