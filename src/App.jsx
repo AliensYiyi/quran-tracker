@@ -3,6 +3,7 @@ import { surahs } from "./data/surahs";
 import { supabase } from "./supabase";
 import Auth from "./Auth";
 import SolatTracker from "./SolatTracker";
+import HafazanHome from "./components/Hafazan/HafazanHome";
 
 function getMalaysiaDateParts(date = new Date()) {
   const formatter = new Intl.DateTimeFormat("en-CA", {
@@ -919,6 +920,12 @@ function App() {
             📖 Quran
           </button>
           <button
+            onClick={() => setAppMode("hafazan")}
+            className={`flex-1 py-3 text-sm font-bold rounded-xl transition-colors ${appMode === "hafazan" ? "bg-white text-emerald-800 shadow-sm" : "text-stone-500 hover:text-stone-700"}`}
+          >
+            🧠 Hafazan
+          </button>
+          <button
             onClick={() => setAppMode("solat")}
             className={`flex-1 py-3 text-sm font-bold rounded-xl transition-colors ${appMode === "solat" ? "bg-white text-emerald-800 shadow-sm" : "text-stone-500 hover:text-stone-700"}`}
           >
@@ -928,6 +935,10 @@ function App() {
 
         {appMode === "solat" && (
           <SolatTracker session={session} lang={lang} />
+        )}
+
+        {appMode === "hafazan" && (
+          <HafazanHome session={session} lang={lang} />
         )}
 
         {appMode === "quran" && (
