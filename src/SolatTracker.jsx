@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { supabase } from "./supabase";
+import { malaysiaZones } from "./data/zones";
 
 export default function SolatTracker({ session, lang }) {
   const [solatRecords, setSolatRecords] = useState([]);
@@ -8,34 +9,41 @@ export default function SolatTracker({ session, lang }) {
 
   // Today's local date string (e.g. "2026-09-17")
   const todayDateStr = new Date().toLocaleDateString("en-CA"); // YYYY-MM-DD format
+  const todayDay = new Date().getDate();
 
-  const [city, setCity] = useState(() => localStorage.getItem("solat_city") || "Kuala Lumpur");
-  const [country, setCountry] = useState(() => localStorage.getItem("solat_country") || "Malaysia");
+  const [zoneCode, setZoneCode] = useState(() => localStorage.getItem("solat_zone") || "WLY01");
   const [isEditingLocation, setIsEditingLocation] = useState(false);
-  const [tempCity, setTempCity] = useState(city);
-  const [tempCountry, setTempCountry] = useState(country);
+  const [tempZone, setTempZone] = useState(zoneCode);
+
+  const selectedZoneInfo = useMemo(() => malaysiaZones.find(z => z.code === zoneCode) || malaysiaZones[0], [zoneCode]);
 
   useEffect(() => {
     fetchWaktuSolat();
     if (session) {
       fetchSolatRecords();
     }
-  }, [session, city, country]);
+  }, [session, zoneCode]);
 
   const fetchWaktuSolat = async () => {
     try {
-      // method=17 is Jabatan Kemajuan Islam Malaysia (JAKIM)
-      const res = await fetch(`https://api.aladhan.com/v1/timingsByCity?city=${encodeURIComponent(city)}&country=${encodeURIComponent(country)}&method=17`);
+      const res = await fetch(`https://api.waktusolat.online/api/solat/${zoneCode}`);
       const data = await res.json();
-      if (data && data.data && data.data.timings) {
-        setWaktuSolat({
-          Subuh: data.data.timings.Fajr,
-          Syuruk: data.data.timings.Sunrise,
-          Zohor: data.data.timings.Dhuhr,
-          Asar: data.data.timings.Asr,
-          Maghrib: data.data.timings.Maghrib,
-          Isyak: data.data.timings.Isha,
-        });
+      
+      if (data && data.prayerTime && data.prayerTime.length > 0) {
+        // Find today's prayer times based on the current day of the month
+        // In case the API array is offset or the month has fewer days, find by day matching or index
+        const todayData = data.prayerTime.find(d => parseInt(d.date.split('-')[0]) === todayDay) || data.prayerTime[todayDay - 1];
+        
+        if (todayData) {
+          setWaktuSolat({
+            Subuh: todayData.fajr.substring(0, 5),
+            Syuruk: todayData.syuruk.substring(0, 5),
+            Zohor: todayData.dhuhr.substring(0, 5),
+            Asar: todayData.asr.substring(0, 5),
+            Maghrib: todayData.maghrib.substring(0, 5),
+            Isyak: todayData.isha.substring(0, 5),
+          });
+        }
       }
     } catch (err) {
       console.error("Failed to fetch Waktu Solat:", err);
@@ -43,10 +51,8 @@ export default function SolatTracker({ session, lang }) {
   };
 
   const saveLocation = () => {
-    setCity(tempCity);
-    setCountry(tempCountry);
-    localStorage.setItem("solat_city", tempCity);
-    localStorage.setItem("solat_country", tempCountry);
+    setZoneCode(tempZone);
+    localStorage.setItem("solat_zone", tempZone);
     setIsEditingLocation(false);
   };
 
@@ -243,8 +249,8 @@ export default function SolatTracker({ session, lang }) {
       <div className="rounded-3xl bg-emerald-800 p-6 text-white shadow-sm">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-lg font-bold">{lang === "en" ? "Waktu Solat" : "Waktu Solat"}</h2>
-          <button onClick={() => setIsEditingLocation(true)} className="text-sm font-medium text-emerald-200 hover:text-white underline decoration-emerald-500/50">
-            {city}, {country}
+          <button onClick={() => { setTempZone(zoneCode); setIsEditingLocation(true); }} className="text-sm font-medium text-emerald-200 hover:text-white underline decoration-emerald-500/50 text-right max-w-[150px] truncate leading-tight">
+            {selectedZoneInfo.name}
           </button>
         </div>
         
@@ -265,26 +271,22 @@ export default function SolatTracker({ session, lang }) {
       {isEditingLocation && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
           <div className="w-full max-w-md rounded-3xl bg-white p-6 shadow-xl">
-            <h2 className="text-xl font-bold text-stone-900 mb-4">{lang === "en" ? "Edit Location" : "Tukar Lokasi"}</h2>
+            <h2 className="text-xl font-bold text-stone-900 mb-4">{lang === "en" ? "Select Zone (JAKIM)" : "Pilih Zon (JAKIM)"}</h2>
             
             <div className="space-y-4">
               <div>
-                <label className="text-sm font-medium text-stone-700">City</label>
-                <input
-                  type="text"
-                  value={tempCity}
-                  onChange={(e) => setTempCity(e.target.value)}
-                  className="mt-2 w-full rounded-xl border border-stone-300 px-4 py-3 outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100"
-                />
-              </div>
-              <div>
-                <label className="text-sm font-medium text-stone-700">Country</label>
-                <input
-                  type="text"
-                  value={tempCountry}
-                  onChange={(e) => setTempCountry(e.target.value)}
-                  className="mt-2 w-full rounded-xl border border-stone-300 px-4 py-3 outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100"
-                />
+                <label className="text-sm font-medium text-stone-700 block mb-2">{lang === "en" ? "Zone" : "Zon"}</label>
+                <select
+                  value={tempZone}
+                  onChange={(e) => setTempZone(e.target.value)}
+                  className="w-full rounded-xl border border-stone-300 px-4 py-3 outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100"
+                >
+                  {malaysiaZones.map(z => (
+                    <option key={z.code} value={z.code}>
+                      {z.state} - {z.name}
+                    </option>
+                  ))}
+                </select>
               </div>
             </div>
 
