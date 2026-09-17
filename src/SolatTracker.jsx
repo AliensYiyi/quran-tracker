@@ -24,7 +24,8 @@ export default function SolatTracker({ session, lang }) {
 
   const fetchWaktuSolat = async () => {
     try {
-      const res = await fetch(`https://api.aladhan.com/v1/timingsByCity?city=${encodeURIComponent(city)}&country=${encodeURIComponent(country)}&method=11`);
+      // method=17 is Jabatan Kemajuan Islam Malaysia (JAKIM)
+      const res = await fetch(`https://api.aladhan.com/v1/timingsByCity?city=${encodeURIComponent(city)}&country=${encodeURIComponent(country)}&method=17`);
       const data = await res.json();
       if (data && data.data && data.data.timings) {
         setWaktuSolat({
