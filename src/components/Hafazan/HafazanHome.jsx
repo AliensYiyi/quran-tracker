@@ -93,6 +93,17 @@ export default function HafazanHome({ session, lang }) {
           </div>
         ) : (
           <div className="space-y-4">
+            {selectedSurah.id !== 1 && (
+              <div className="text-center py-4">
+                <p 
+                  dir="rtl" 
+                  className="text-3xl leading-loose text-stone-800"
+                  style={{ fontFamily: "'Amiri', 'Traditional Arabic', serif" }}
+                >
+                  بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ
+                </p>
+              </div>
+            )}
             {surahText.map((ayah) => (
               <AyahCard key={ayah.ayah} ayah={ayah} lang={lang} globalRevealState={globalRevealState} />
             ))}

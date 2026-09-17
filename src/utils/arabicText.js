@@ -53,10 +53,21 @@ export const getSurahText = async (surahNumber) => {
     const data = await res.json();
     
     if (data.code === 200) {
-      return data.data.ayahs.map(a => ({
-        ayah: a.numberInSurah,
-        text: a.text
-      }));
+      const bismillah = "بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ ";
+      
+      return data.data.ayahs.map(a => {
+        let text = a.text;
+        // The API prepends Bismillah to Ayah 1 of every Surah except Al-Fatihah.
+        // We strip it here so it doesn't show up inside the Ayah 1 flashcard.
+        if (surahNumber !== 1 && a.numberInSurah === 1 && text.startsWith(bismillah)) {
+          text = text.replace(bismillah, "");
+        }
+        
+        return {
+          ayah: a.numberInSurah,
+          text: text
+        };
+      });
     }
     throw new Error("Failed to load Surah data");
   } catch (error) {
