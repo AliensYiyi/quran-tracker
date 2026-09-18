@@ -62,10 +62,10 @@ export default function ZikirTracker({ session, lang }) {
 
       {/* Active Zikir Display */}
       <div className="text-center bg-white rounded-3xl p-8 shadow-sm border border-emerald-100 flex flex-col items-center justify-center min-h-[250px]">
-        <p className="text-6xl font-bold text-emerald-800 leading-tight mb-4" dir="rtl" style={{ fontFamily: "'Amiri', 'Traditional Arabic', serif" }}>
+        <p className="text-5xl md:text-6xl font-bold text-emerald-800 leading-[1.8] mb-4" dir="rtl" style={{ fontFamily: "'Amiri', 'Traditional Arabic', serif" }}>
           {activeZikir.arabic}
         </p>
-        <p className="text-stone-500 font-medium mt-4">
+        <p className="text-stone-500 font-medium mt-4 px-4">
           {lang === "en" ? activeZikir.meaningEn : activeZikir.meaningMs}
         </p>
       </div>
@@ -127,14 +127,14 @@ export default function ZikirTracker({ session, lang }) {
       {/* Zikir Selector */}
       <div className="mt-8">
         <h3 className="font-bold text-stone-800 mb-4">{lang === "en" ? "Select Zikir" : "Pilih Zikir"}</h3>
-        <div className="flex flex-col gap-3">
+        <div className="grid grid-cols-2 gap-3">
           {zikirList.map(z => (
             <button
               key={z.id}
               onClick={() => handleZikirSelect(z)}
-              className={`p-4 rounded-2xl border-2 text-center transition-all ${activeZikir.id === z.id ? 'border-emerald-500 bg-emerald-50 shadow-sm' : 'border-stone-100 bg-white hover:border-emerald-200'}`}
+              className={`p-4 rounded-2xl border-2 text-center transition-all ${activeZikir.id === z.id ? 'border-emerald-500 bg-emerald-50' : 'border-stone-100 bg-white hover:border-emerald-200'}`}
             >
-              <p className="text-2xl font-bold text-stone-800 mb-2 leading-loose" dir="rtl" style={{ fontFamily: "'Amiri', 'Traditional Arabic', serif" }}>{z.arabic}</p>
+              <p className="text-2xl font-bold text-stone-800 mb-2" dir="rtl">{z.arabic}</p>
               <p className="text-xs text-stone-500">{lang === "en" ? z.meaningEn : z.meaningMs}</p>
             </button>
           ))}
