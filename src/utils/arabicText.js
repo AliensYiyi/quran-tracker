@@ -47,15 +47,18 @@ export const getAyahText = async (surahNumber, ayahNumber, lang = "en") => {
  * @param {number} surahNumber - The Surah number (1-114)
  * @returns {Promise<Array<{ayah: number, text: string}>>}
  */
-export const getSurahText = async (surahNumber) => {
+export const getSurahText = async (surahNumber, lang = "ms") => {
   try {
-    const res = await fetch(`${API_BASE}/surah/${surahNumber}/quran-uthmani`);
+    const translationEdition = lang === "en" ? "en.asad" : "ms.basmeih";
+    const res = await fetch(`${API_BASE}/surah/${surahNumber}/editions/quran-uthmani,${translationEdition}`);
     const data = await res.json();
     
     if (data.code === 200) {
+      const quranData = data.data[0].ayahs;
+      const transData = data.data[1].ayahs;
       const bismillah = "بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ ";
       
-      return data.data.ayahs.map(a => {
+      return quranData.map((a, index) => {
         let text = a.text;
         // The API prepends Bismillah to Ayah 1 of every Surah except Al-Fatihah.
         // We strip it here so it doesn't show up inside the Ayah 1 flashcard.
@@ -66,7 +69,8 @@ export const getSurahText = async (surahNumber) => {
         return {
           ayah: a.numberInSurah,
           globalAyah: a.number,
-          text: text
+          text: text,
+          translation: transData[index].text
         };
       });
     }

@@ -11,6 +11,12 @@ function AyahCard({ ayah, lang, globalRevealState }) {
     setIsRevealed(globalRevealState);
   }, [globalRevealState]);
 
+  const playAudio = (e) => {
+    e.stopPropagation(); // Prevent toggling the card
+    const audio = new Audio(`https://cdn.islamic.network/quran/audio/128/ar.alafasy/${ayah.globalAyah}.mp3`);
+    audio.play();
+  };
+
   return (
     <div 
       onClick={() => setIsRevealed(!isRevealed)}
@@ -20,9 +26,19 @@ function AyahCard({ ayah, lang, globalRevealState }) {
         <span className="text-sm font-bold text-stone-400">
           {lang === "en" ? "Ayah" : "Ayat"} {ayah.ayah}
         </span>
-        <span className="text-xs font-medium text-emerald-600 bg-emerald-50 px-2 py-1 rounded-md">
-          {isRevealed ? (lang === "en" ? "Tap to hide" : "Tekan untuk sembunyi") : (lang === "en" ? "Tap to reveal" : "Tekan untuk papar")}
-        </span>
+        <div className="flex items-center gap-2">
+          {isRevealed && (
+            <button 
+              onClick={playAudio}
+              className="text-xs font-bold text-blue-700 bg-blue-50 px-2 py-1 rounded-md hover:bg-blue-100 flex items-center"
+            >
+              🔊 {lang === "en" ? "Listen" : "Dengar"}
+            </button>
+          )}
+          <span className="text-xs font-medium text-emerald-600 bg-emerald-50 px-2 py-1 rounded-md">
+            {isRevealed ? (lang === "en" ? "Tap to hide" : "Tekan untuk sembunyi") : (lang === "en" ? "Tap to reveal" : "Tekan untuk papar")}
+          </span>
+        </div>
       </div>
 
       <div className={`transition-all duration-300 ${isRevealed ? 'opacity-100 blur-none' : 'opacity-0 h-0 overflow-hidden blur-md'}`}>
@@ -33,6 +49,11 @@ function AyahCard({ ayah, lang, globalRevealState }) {
         >
           {ayah.text}
         </p>
+        {ayah.translation && (
+          <p className="mt-4 pt-4 border-t border-stone-100 text-stone-600 text-sm leading-relaxed">
+            {ayah.translation}
+          </p>
+        )}
       </div>
 
       {!isRevealed && (
@@ -55,7 +76,7 @@ export default function HafazanHome({ session, lang }) {
     setSelectedSurah(surah);
     setGlobalRevealState(true); // default to show when opening
     setLoading(true);
-    const textData = await getSurahText(surah.id);
+    const textData = await getSurahText(surah.id, lang);
     setSurahText(textData);
     setLoading(false);
   };
