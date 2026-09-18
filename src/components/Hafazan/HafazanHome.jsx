@@ -102,15 +102,15 @@ export default function HafazanHome({ session, lang }) {
                 onClick={() => setIsTasmikMode(true)}
                 className="text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-full shadow-sm flex items-center gap-2"
               >
-                🎤 {lang === "en" ? "Tasmik" : "Tasmik"}
+                🎤
               </button>
               <button 
                 onClick={() => setGlobalRevealState(!globalRevealState)}
                 className="text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-700 px-4 py-2 rounded-full shadow-sm"
               >
                 {globalRevealState 
-                  ? (lang === "en" ? "🙈 Hide All" : "🙈 Sembunyi Semua") 
-                  : (lang === "en" ? "👀 Show All" : "👀 Papar Semua")}
+                  ? (lang === "en" ? "🙈" : "🙈") 
+                  : (lang === "en" ? "👀" : "👀")}
               </button>
             </div>
           )}
@@ -155,7 +155,7 @@ export default function HafazanHome({ session, lang }) {
   return (
     <div className="space-y-4">
       <h2 className="text-xl font-bold text-stone-900 mb-6">
-        {lang === "en" ? "Ayat Lazim (Juz 30)" : "Ayat Lazim (Juz Amma)"}
+        {lang === "en" ? "Ayat Lazim" : "Ayat Lazim (Juz Amma)"}
       </h2>
       
       <div className="grid grid-cols-1 gap-3">

@@ -5,6 +5,7 @@ const zikirList = [
   { id: "subhanallah", arabic: "سُبْحَانَ ٱللَّٰهِ", meaningEn: "Glory be to Allah", meaningMs: "Maha Suci Allah", target: 33 },
   { id: "alhamdulillah", arabic: "ٱلْحَمْدُ لِلَّٰهِ", meaningEn: "Praise be to Allah", meaningMs: "Segala puji bagi Allah", target: 33 },
   { id: "allahuakbar", arabic: "ٱللَّٰهُ أَكْبَرُ", meaningEn: "Allah is the Greatest", meaningMs: "Allah Maha Besar", target: 34 },
+  { id: "selawat", arabic: "اللَّهُمَّ صَلِّ عَلَىٰ مُحَمَّدٍ وَعَلَىٰ آلِ مُحَمَّدٍ", meaningEn: "O Allah, send blessings upon Muhammad and the family of Muhammad", meaningMs: "Ya Allah, selawat ke atas Nabi Muhammad dan keluarga baginda", target: 100 },
   { id: "astaghfirullah", arabic: "أَسْتَغْفِرُ اللَّهَ", meaningEn: "I seek forgiveness from Allah", meaningMs: "Aku memohon ampun kepada Allah", target: 100 },
   { id: "lailahaillallah", arabic: "لَا إِلَٰهَ إِلَّا ٱللَّٰهُ", meaningEn: "There is no deity but Allah", meaningMs: "Tiada Tuhan melainkan Allah", target: 100 }
 ];
@@ -24,6 +25,17 @@ export default function ZikirTracker({ session, lang }) {
         navigator.vibrate([100, 50, 100]); // longer vibration on target hit
       } else {
         navigator.vibrate(20);
+      }
+    }
+  };
+
+  const handleManualAdd = () => {
+    const input = window.prompt(lang === "en" ? "Enter number to add manually:" : "Masukkan jumlah untuk ditambah secara manual:", "100");
+    if (input) {
+      const num = parseInt(input, 10);
+      if (!isNaN(num) && num > 0) {
+        setCount(prev => prev + num);
+        setTotalCount(prev => prev + num);
       }
     }
   };
@@ -97,12 +109,18 @@ export default function ZikirTracker({ session, lang }) {
         </button>
       </div>
 
-      <div className="flex justify-center">
+      <div className="flex justify-center gap-3">
+        <button 
+          onClick={handleManualAdd}
+          className="px-6 py-2 rounded-full bg-emerald-100 text-emerald-700 font-bold hover:bg-emerald-200 text-sm flex items-center gap-2"
+        >
+          + {lang === "en" ? "Manual Add" : "Tambah Manual"}
+        </button>
         <button 
           onClick={handleReset}
-          className="px-6 py-2 rounded-full bg-stone-200 text-stone-600 font-bold hover:bg-stone-300 text-sm"
+          className="px-6 py-2 rounded-full bg-stone-200 text-stone-600 font-bold hover:bg-stone-300 text-sm flex items-center gap-2"
         >
-          {lang === "en" ? "Reset Counter" : "Set Semula"}
+          ↺ {lang === "en" ? "Reset" : "Set Semula"}
         </button>
       </div>
 
@@ -126,3 +144,4 @@ export default function ZikirTracker({ session, lang }) {
     </div>
   );
 }
+
