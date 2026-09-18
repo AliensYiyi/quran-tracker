@@ -127,14 +127,14 @@ export default function ZikirTracker({ session, lang }) {
       {/* Zikir Selector */}
       <div className="mt-8">
         <h3 className="font-bold text-stone-800 mb-4">{lang === "en" ? "Select Zikir" : "Pilih Zikir"}</h3>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="flex flex-col gap-3">
           {zikirList.map(z => (
             <button
               key={z.id}
               onClick={() => handleZikirSelect(z)}
-              className={`p-4 rounded-2xl border-2 text-center transition-all ${activeZikir.id === z.id ? 'border-emerald-500 bg-emerald-50' : 'border-stone-100 bg-white hover:border-emerald-200'}`}
+              className={`p-4 rounded-2xl border-2 text-center transition-all ${activeZikir.id === z.id ? 'border-emerald-500 bg-emerald-50 shadow-sm' : 'border-stone-100 bg-white hover:border-emerald-200'}`}
             >
-              <p className="text-2xl font-bold text-stone-800 mb-2" dir="rtl">{z.arabic}</p>
+              <p className="text-2xl font-bold text-stone-800 mb-2 leading-loose" dir="rtl" style={{ fontFamily: "'Amiri', 'Traditional Arabic', serif" }}>{z.arabic}</p>
               <p className="text-xs text-stone-500">{lang === "en" ? z.meaningEn : z.meaningMs}</p>
             </button>
           ))}
