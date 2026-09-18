@@ -75,12 +75,16 @@ export default function ZikirTracker({ session, lang }) {
         
         const dayRecord = data.find(r => r.date === dateStr);
         
-        // A day counts towards streak if they did ANY zikir that day
-        const didZikir = dayRecord && (
-          dayRecord.subhanallah > 0 || dayRecord.alhamdulillah > 0 || 
-          dayRecord.allahuakbar > 0 || dayRecord.selawat > 0 || 
-          dayRecord.astaghfirullah > 0 || dayRecord.lailahaillallah > 0
-        );
+        const totalForDay = dayRecord ? (
+          (dayRecord.subhanallah || 0) + 
+          (dayRecord.alhamdulillah || 0) + 
+          (dayRecord.allahuakbar || 0) + 
+          (dayRecord.selawat || 0) + 
+          (dayRecord.astaghfirullah || 0) + 
+          (dayRecord.lailahaillallah || 0)
+        ) : 0;
+        
+        const didZikir = totalForDay >= 100;
 
         if (didZikir) {
           currentStreak++;
