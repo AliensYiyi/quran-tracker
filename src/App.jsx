@@ -4,6 +4,7 @@ import { supabase } from "./supabase";
 import Auth from "./Auth";
 import SolatTracker from "./SolatTracker";
 import HafazanHome from "./components/Hafazan/HafazanHome";
+import ZikirTracker from "./ZikirTracker";
 
 function getMalaysiaDateParts(date = new Date()) {
   const formatter = new Intl.DateTimeFormat("en-CA", {
@@ -931,6 +932,12 @@ function App() {
           >
             🕌 Solat
           </button>
+          <button
+            onClick={() => setAppMode("zikir")}
+            className={`flex-1 py-3 text-sm font-bold rounded-xl transition-colors ${appMode === "zikir" ? "bg-white text-emerald-800 shadow-sm" : "text-stone-500 hover:text-stone-700"}`}
+          >
+            📿 Zikir
+          </button>
         </div>
 
         {appMode === "solat" && (
@@ -939,6 +946,10 @@ function App() {
 
         {appMode === "hafazan" && (
           <HafazanHome session={session} lang={lang} />
+        )}
+
+        {appMode === "zikir" && (
+          <ZikirTracker session={session} lang={lang} />
         )}
 
         {appMode === "quran" && (
