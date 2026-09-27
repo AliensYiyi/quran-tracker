@@ -125,9 +125,12 @@ export default function ZikirTracker({ session, lang }) {
             user_id: session.user.id,
             date: today,
             ...newCounts
-          });
+          }, { onConflict: 'user_id,date' });
           
-        if (error) console.error("Error saving zikir", error);
+        if (error) {
+          console.error("Error saving zikir", error);
+          alert(`Database Error: ${error.message}`);
+        }
       } catch (err) {
         console.error(err);
       } finally {

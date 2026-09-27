@@ -9,11 +9,7 @@ export default function SolatTracker({ session, lang }) {
 
   // Today's local date string (e.g. "2026-09-17")
   const todayDateStr = new Date().toLocaleDateString("en-CA"); // YYYY-MM-DD format
-  
-  const [activeDateObj, setActiveDateObj] = useState(() => new Date());
-  const activeDateStr = activeDateObj.toLocaleDateString("en-CA");
-  const activeDay = activeDateObj.getDate();
-  const isToday = activeDateStr === todayDateStr;
+  const todayDay = new Date().getDate();
 
   const [zoneCode, setZoneCode] = useState(() => localStorage.getItem("solat_zone") || "WLY01");
   const [isEditingLocation, setIsEditingLocation] = useState(false);
@@ -26,7 +22,7 @@ export default function SolatTracker({ session, lang }) {
     if (session) {
       fetchSolatRecords();
     }
-  }, [session, zoneCode, activeDateStr]);
+  }, [session, zoneCode]);
 
   const fetchWaktuSolat = async () => {
     try {
@@ -34,17 +30,18 @@ export default function SolatTracker({ session, lang }) {
       const data = await res.json();
       
       if (data && data.prayerTime && data.prayerTime.length > 0) {
-        // Find prayer times based on the active day of the month
-        const activeData = data.prayerTime.find(d => parseInt(d.date.split('-')[0]) === activeDay) || data.prayerTime[activeDay - 1];
+        // Find today's prayer times based on the current day of the month
+        // In case the API array is offset or the month has fewer days, find by day matching or index
+        const todayData = data.prayerTime.find(d => parseInt(d.date.split('-')[0]) === todayDay) || data.prayerTime[todayDay - 1];
         
-        if (activeData) {
+        if (todayData) {
           setWaktuSolat({
-            Subuh: activeData.fajr.substring(0, 5),
-            Syuruk: activeData.syuruk.substring(0, 5),
-            Zohor: activeData.dhuhr.substring(0, 5),
-            Asar: activeData.asr.substring(0, 5),
-            Maghrib: activeData.maghrib.substring(0, 5),
-            Isyak: activeData.isha.substring(0, 5),
+            Subuh: todayData.fajr.substring(0, 5),
+            Syuruk: todayData.syuruk.substring(0, 5),
+            Zohor: todayData.dhuhr.substring(0, 5),
+            Asar: todayData.asr.substring(0, 5),
+            Maghrib: todayData.maghrib.substring(0, 5),
+            Isyak: todayData.isha.substring(0, 5),
           });
         }
       }
@@ -72,12 +69,12 @@ export default function SolatTracker({ session, lang }) {
     setLoading(false);
   };
 
-  // Get or initialize active record
-  const activeRecord = useMemo(() => {
-    const record = solatRecords.find((r) => r.date === activeDateStr);
+  // Get or initialize today's record
+  const todayRecord = useMemo(() => {
+    const record = solatRecords.find((r) => r.date === todayDateStr);
     return (
       record || {
-        date: activeDateStr,
+        date: todayDateStr,
         subuh: false,
         zohor: false,
         asar: false,
@@ -90,7 +87,7 @@ export default function SolatTracker({ session, lang }) {
         qada_isyak: 0,
       }
     );
-  }, [solatRecords, activeDateStr]);
+  }, [solatRecords, todayDateStr]);
 
   // Calculate Streak
   const streak = useMemo(() => {
@@ -163,17 +160,17 @@ export default function SolatTracker({ session, lang }) {
   const updateSolat = async (field, value) => {
     if (!session) return;
     
-    const newRecord = { ...activeRecord, [field]: value };
+    const newRecord = { ...todayRecord, [field]: value };
     const { id, ...payload } = newRecord;
     
     // Optimistic UI update
     setSolatRecords(prev => {
-      const exists = prev.find(r => r.date === activeDateStr);
-      if (exists) return prev.map(r => r.date === activeDateStr ? { ...r, [field]: value } : r);
+      const exists = prev.find(r => r.date === todayDateStr);
+      if (exists) return prev.map(r => r.date === todayDateStr ? { ...r, [field]: value } : r);
       return [...prev, newRecord];
     });
 
-    const isExisting = solatRecords.find((r) => r.date === activeDateStr);
+    const isExisting = solatRecords.find((r) => r.date === todayDateStr);
     
     if (isExisting) {
       await supabase
@@ -185,7 +182,7 @@ export default function SolatTracker({ session, lang }) {
         .from("solat_records")
         .insert({
           user_id: session.user.id,
-          date: activeDateStr,
+          date: todayDateStr,
           subuh: newRecord.subuh,
           zohor: newRecord.zohor,
           asar: newRecord.asar,
@@ -201,7 +198,7 @@ export default function SolatTracker({ session, lang }) {
         .single();
         
       if (data) {
-        setSolatRecords(prev => prev.map(r => r.date === activeDateStr ? data : r));
+        setSolatRecords(prev => prev.map(r => r.date === todayDateStr ? data : r));
       }
     }
   };
@@ -221,26 +218,6 @@ export default function SolatTracker({ session, lang }) {
   return (
     <div className="space-y-6">
       
-      {/* Date Navigator */}
-      <div className="flex items-center justify-between">
-        <button 
-          onClick={() => setActiveDateObj(d => { const n = new Date(d); n.setDate(d.getDate() - 1); return n; })}
-          className="text-stone-500 hover:text-emerald-700 bg-white shadow-sm px-4 py-2 rounded-xl font-bold border-2 border-stone-100"
-        >
-          &larr;
-        </button>
-        <div className="font-bold text-stone-700 text-lg">
-          {isToday ? (lang === "en" ? "Today" : "Hari Ini") : activeDateStr}
-        </div>
-        <button 
-          onClick={() => setActiveDateObj(d => { const n = new Date(d); n.setDate(d.getDate() + 1); return n; })}
-          disabled={isToday}
-          className={`px-4 py-2 rounded-xl font-bold border-2 border-stone-100 ${isToday ? 'opacity-50 cursor-not-allowed bg-stone-100 text-stone-400' : 'bg-white shadow-sm text-stone-500 hover:text-emerald-700'}`}
-        >
-          &rarr;
-        </button>
-      </div>
-
       {/* Dashboard Summary */}
       <div className="rounded-3xl bg-white p-6 shadow-sm border-2 border-stone-100">
         <h2 className="text-xl font-bold text-stone-900 mb-4">{lang === "en" ? "Solat Dashboard" : "Papan Pemuka Solat"}</h2>
@@ -341,7 +318,7 @@ export default function SolatTracker({ session, lang }) {
               <div className="relative flex items-center">
                 <input
                   type="checkbox"
-                  checked={activeRecord[prayer.id]}
+                  checked={todayRecord[prayer.id]}
                   onChange={(e) => updateSolat(prayer.id, e.target.checked)}
                   className="w-6 h-6 rounded-md border-stone-300 text-emerald-600 focus:ring-emerald-500"
                 />
@@ -376,18 +353,18 @@ export default function SolatTracker({ session, lang }) {
                 
                 <div className="flex items-center gap-4">
                   <button 
-                    onClick={() => updateSolat(qadaField, Math.max(0, activeRecord[qadaField] - 1))}
+                    onClick={() => updateSolat(qadaField, Math.max(0, todayRecord[qadaField] - 1))}
                     className="h-10 w-10 rounded-full bg-stone-200 text-lg font-bold text-stone-600 hover:bg-stone-300"
                   >
                     -
                   </button>
                   
                   <div className="w-8 text-center">
-                    <p className="text-xl font-bold text-emerald-700">{activeRecord[qadaField]}</p>
+                    <p className="text-xl font-bold text-emerald-700">{todayRecord[qadaField]}</p>
                   </div>
                   
                   <button 
-                    onClick={() => updateSolat(qadaField, activeRecord[qadaField] + 1)}
+                    onClick={() => updateSolat(qadaField, todayRecord[qadaField] + 1)}
                     className="h-10 w-10 rounded-full bg-emerald-100 text-lg font-bold text-emerald-700 hover:bg-emerald-200"
                   >
                     +
