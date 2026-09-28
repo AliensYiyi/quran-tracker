@@ -93,33 +93,30 @@ export default function SolatTracker({ session, lang }) {
   const streak = useMemo(() => {
     if (solatRecords.length === 0) return 0;
     
-    // Sort descending by date
-    const sorted = [...solatRecords].sort((a, b) => new Date(b.date) - new Date(a.date));
     let currentStreak = 0;
+    let checkDate = new Date(todayDateStr);
     
-    // Start from today or yesterday
-    let dateToCheck = new Date(todayDateStr);
-    
-    for (let i = 0; i < sorted.length; i++) {
-      const record = sorted[i];
-      const recordDate = new Date(record.date);
-      
-      const isComplete = record.subuh && record.zohor && record.asar && record.maghrib && record.isyak;
-      
-      // If it's today and not complete, we skip checking today and check yesterday instead
-      if (record.date === todayDateStr && !isComplete) {
-        continue;
-      }
-      
-      // If record date matches our check date and is complete
-      if (record.date === dateToCheck.toLocaleDateString("en-CA") && isComplete) {
+    const isComplete = (dateStr) => {
+      const r = solatRecords.find(x => x.date === dateStr);
+      return r && r.subuh && r.zohor && r.asar && r.maghrib && r.isyak;
+    };
+
+    // If today is NOT complete, the streak might still be alive from yesterday
+    if (!isComplete(todayDateStr)) {
+      checkDate.setDate(checkDate.getDate() - 1);
+    }
+
+    // Check backwards day by day
+    for (let i = 0; i < 365; i++) {
+      const dStr = checkDate.toLocaleDateString("en-CA");
+      if (isComplete(dStr)) {
         currentStreak++;
-        dateToCheck.setDate(dateToCheck.getDate() - 1);
+        checkDate.setDate(checkDate.getDate() - 1);
       } else {
-        // Streak broken
-        break;
+        break; // Streak broken
       }
     }
+    
     return currentStreak;
   }, [solatRecords, todayDateStr]);
 
